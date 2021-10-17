@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestUpdate(t *testing.T) {
+func TestStep(t *testing.T) {
 
 	testCases := []struct {
 		desc  string
@@ -16,7 +16,20 @@ func TestUpdate(t *testing.T) {
 		want  map[pos]alive
 	}{
 		{
-			desc: "simple case",
+			desc: "empty grid should not change",
+			model: model{
+				height:  20,
+				width:   20,
+				timeout: time.Now().Add(time.Second * 20),
+				grid: grid{
+					alive: make(map[pos]alive),
+				},
+			},
+			cells: []pos{},
+			want:  map[pos]alive{},
+		},
+		{
+			desc: "single cell should die",
 			model: model{
 				height:  20,
 				width:   20,
@@ -32,7 +45,7 @@ func TestUpdate(t *testing.T) {
 			want: map[pos]alive{},
 		},
 		{
-			desc: "oscillator",
+			desc: "oscillator should rotate",
 			model: model{
 				height:  20,
 				width:   20,
@@ -41,8 +54,21 @@ func TestUpdate(t *testing.T) {
 					alive: make(map[pos]alive),
 				},
 			},
-			cells: []pos{{2, 2}, {4, 2}},
-			want:  map[pos]alive{pos{3, 1}: alive{}, pos{3, 3}: alive{}},
+			cells: []pos{{2, 2}, {3, 2}, {4, 2}},
+			want:  map[pos]alive{pos{3, 1}: alive{}, pos{3, 3}: alive{}, pos{3, 2}: alive{}},
+		},
+		{
+			desc: "three points converge",
+			model: model{
+				height:  20,
+				width:   20,
+				timeout: time.Now().Add(time.Second * 20),
+				grid: grid{
+					alive: make(map[pos]alive),
+				},
+			},
+			cells: []pos{{2, 2}, {3, 3}, {4, 1}},
+			want:  map[pos]alive{pos{3, 2}: alive{}},
 		},
 	}
 	for _, tC := range testCases {
@@ -50,10 +76,9 @@ func TestUpdate(t *testing.T) {
 			for _, cell := range tC.cells {
 				tC.model.grid.alive[cell] = alive{}
 			}
-			// log.Println(tC.model.grid.alive)
 			tC.model.applyRules()
-			// log.Println(tC.model.grid.alive)
-			assert.Equal(t, tC.model.grid.alive, tC.want)
+
+			assert.Equal(t, tC.want, tC.model.grid.alive)
 		})
 	}
 }

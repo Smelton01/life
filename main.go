@@ -125,11 +125,14 @@ func (m *model) applyRules() {
 		}
 	}
 	for cell, numAdj := range counter {
+		// live cells die
 		if numAdj < 2 || numAdj > 3 {
 			delete(m.grid.alive, cell)
 		}
+		// dead cell lives
 		if numAdj == 3 {
 			m.grid.alive[cell] = alive{}
+
 		}
 	}
 }
