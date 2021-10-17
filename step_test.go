@@ -55,7 +55,7 @@ func TestStep(t *testing.T) {
 				},
 			},
 			cells: []pos{{2, 2}, {3, 2}, {4, 2}},
-			want:  map[pos]alive{pos{3, 1}: alive{}, pos{3, 3}: alive{}, pos{3, 2}: alive{}},
+			want:  map[pos]alive{{3, 1}: {}, {3, 3}: {}, {3, 2}: {}},
 		},
 		{
 			desc: "three points converge",
@@ -68,7 +68,7 @@ func TestStep(t *testing.T) {
 				},
 			},
 			cells: []pos{{2, 2}, {3, 3}, {4, 1}},
-			want:  map[pos]alive{pos{3, 2}: alive{}},
+			want:  map[pos]alive{{3, 2}: {}},
 		},
 	}
 	for _, tC := range testCases {
