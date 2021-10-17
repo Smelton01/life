@@ -20,8 +20,8 @@ type model struct {
 	height  int
 	width   int
 	timeout time.Time
-	playing bool
-	grid    grid
+	// playing bool
+	grid grid
 }
 
 type pos struct {
@@ -29,10 +29,10 @@ type pos struct {
 	y int
 }
 type grid struct {
-	alive map[pos]cell
+	alive map[pos]alive
 }
 
-type cell struct{}
+type alive struct{}
 
 func main() {
 	p := tea.NewProgram(initialModel())
@@ -48,18 +48,18 @@ func initialModel() model {
 		width:   20,
 		grid:    initCell(),
 		timeout: time.Now().Add(duration),
-		playing: false,
+		// playing: false,
 	}
 }
 
 func initCell() grid {
-	grid := grid{alive: make(map[pos]cell)}
+	grid := grid{alive: make(map[pos]alive)}
 	pos1 := pos{x: 5, y: 5}
-	grid.alive[pos1] = cell{}
+	grid.alive[pos1] = alive{}
 	return grid
 }
 
-func (p pos) getAdjacent(height, width int) {
+func (p pos) getAdjacent(height, width int) []pos {
 	adj := []pos{}
 	candidates := [][2]int{{0, 1}, {0, -1}, {1, 0}, {1, -1}, {1, 1}, {-1, 0}, {-1, 1}, {-1, -1}}
 	for _, n := range candidates {
@@ -72,7 +72,7 @@ func (p pos) getAdjacent(height, width int) {
 		}
 		adj = append(adj, newPos)
 	}
-
+	return adj
 }
 
 func (m model) Init() tea.Cmd {
@@ -96,10 +96,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	case tickMsg:
-		m.grid.alive[pos{
-			x: rando(m.width),
-			y: rando(m.height),
-		}] = cell{}
+		// m.grid.alive[pos{
+		// 	x: rando(m.width),
+		// 	y: rando(m.height),
+		// }] = alive{}
+		m.applyRules()
 		return m, tick()
 	}
 	return m, nil
@@ -109,9 +110,33 @@ func rando(n int) int {
 	return rand.Intn(n)
 }
 
+func (m *model) applyRules() {
+	counter := map[pos]int{}
+	// iterate through all alive cells
+	for k := range m.grid.alive {
+		if _, ok := counter[k]; !ok {
+			counter[k] = 0
+		}
+		// get adjacent cells of each
+		adjList := k.getAdjacent(m.height, m.width)
+		for _, adj := range adjList {
+			// increment adjacent counter for each neighbor
+			counter[adj]++
+		}
+	}
+	for cell, numAdj := range counter {
+		if numAdj < 2 || numAdj > 3 {
+			delete(m.grid.alive, cell)
+		}
+		if numAdj == 3 {
+			m.grid.alive[cell] = alive{}
+		}
+	}
+}
+
 func (m model) View() string {
 	// The header
-	s := "What should we buy at the market?\n\n"
+	s := []rune("What should we buy at the market?\n\n")
 
 	for y := 0; y < m.height; y++ {
 		for x := 0; x < m.width; x++ {
@@ -119,12 +144,12 @@ func (m model) View() string {
 			if _, ok := m.grid.alive[pos{x: x, y: y}]; !ok {
 				val = " "
 			} else {
-				val = "o"
+				val = string([]byte{254})
 			}
-			s += val
+			s = append(s, []rune(val)...)
 		}
-		s += "\n"
+		s = append(s, rune('\n'))
 	}
 
-	return s + fmt.Sprintf("%v", m.height)
+	return string(s)
 }
