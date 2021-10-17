@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"math/rand"
 	"os"
+	"strings"
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -11,17 +11,11 @@ import (
 
 type tickMsg time.Time
 
-const (
-	interval = time.Second
-	duration = time.Second * 10
-)
-
 type model struct {
-	height  int
-	width   int
-	timeout time.Time
-	// playing bool
-	grid grid
+	height int
+	width  int
+	grid   grid
+	speed  time.Duration
 }
 
 type pos struct {
@@ -44,21 +38,23 @@ func main() {
 
 func initialModel() model {
 	return model{
-		height:  20,
-		width:   20,
-		grid:    initCell(),
-		timeout: time.Now().Add(duration),
-		// playing: false,
+		height: 20,
+		width:  20,
+		grid:   initCell(),
+		speed:  time.Millisecond * 500,
 	}
 }
 
 func initCell() grid {
 	grid := grid{alive: make(map[pos]alive)}
-	pos1 := pos{x: 5, y: 5}
-	grid.alive[pos1] = alive{}
+	init := []pos{{5, 5}, {6, 5}, {7, 5}}
+	for _, pos := range init {
+		grid.alive[pos] = alive{}
+	}
 	return grid
 }
 
+// Get adjacent cells within board height, width
 func (p pos) getAdjacent(height, width int) []pos {
 	adj := []pos{}
 	candidates := [][2]int{{0, 1}, {0, -1}, {1, 0}, {1, -1}, {1, 1}, {-1, 0}, {-1, 1}, {-1, -1}}
@@ -76,11 +72,11 @@ func (p pos) getAdjacent(height, width int) []pos {
 }
 
 func (m model) Init() tea.Cmd {
-	return tick()
+	return tick(m.speed)
 }
 
-func tick() tea.Cmd {
-	return tea.Tick(time.Duration(interval), func(t time.Time) tea.Msg {
+func tick(speed time.Duration) tea.Cmd {
+	return tea.Tick(time.Duration(speed), func(t time.Time) tea.Msg {
 		return tickMsg(t)
 	})
 }
@@ -96,23 +92,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	case tickMsg:
-		// m.grid.alive[pos{
-		// 	x: rando(m.width),
-		// 	y: rando(m.height),
-		// }] = alive{}
-		m.applyRules()
-		return m, tick()
+		m.nextState()
+		return m, tick(m.speed)
 	}
 	return m, nil
 }
 
-func rando(n int) int {
-	return rand.Intn(n)
-}
-
-func (m *model) applyRules() {
+func (m *model) nextState() {
 	counter := map[pos]int{}
-	// iterate through all alive cells
+	// iterate through all live cells
 	for k := range m.grid.alive {
 		if _, ok := counter[k]; !ok {
 			counter[k] = 0
@@ -125,14 +113,13 @@ func (m *model) applyRules() {
 		}
 	}
 	for cell, numAdj := range counter {
-		// live cells die
+		// live cells which die
 		if numAdj < 2 || numAdj > 3 {
 			delete(m.grid.alive, cell)
 		}
-		// dead cell lives
+		// dead cell which live
 		if numAdj == 3 {
 			m.grid.alive[cell] = alive{}
-
 		}
 	}
 }
@@ -140,6 +127,7 @@ func (m *model) applyRules() {
 func (m model) View() string {
 	// The header
 	s := []rune("What should we buy at the market?\n\n")
+	s = append(s, []rune(strings.Repeat("-", m.width))...)
 
 	for y := 0; y < m.height; y++ {
 		for x := 0; x < m.width; x++ {

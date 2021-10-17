@@ -18,9 +18,8 @@ func TestStep(t *testing.T) {
 		{
 			desc: "empty grid should not change",
 			model: model{
-				height:  20,
-				width:   20,
-				timeout: time.Now().Add(time.Second * 20),
+				height: 20,
+				width:  20,
 				grid: grid{
 					alive: make(map[pos]alive),
 				},
@@ -31,9 +30,8 @@ func TestStep(t *testing.T) {
 		{
 			desc: "single cell should die",
 			model: model{
-				height:  20,
-				width:   20,
-				timeout: time.Now().Add(time.Second * 20),
+				height: 20,
+				width:  20,
 				grid: grid{
 					alive: make(map[pos]alive),
 				},
@@ -47,9 +45,8 @@ func TestStep(t *testing.T) {
 		{
 			desc: "oscillator should rotate",
 			model: model{
-				height:  20,
-				width:   20,
-				timeout: time.Now().Add(time.Second * 20),
+				height: 20,
+				width:  20,
 				grid: grid{
 					alive: make(map[pos]alive),
 				},
@@ -60,9 +57,8 @@ func TestStep(t *testing.T) {
 		{
 			desc: "three points converge",
 			model: model{
-				height:  20,
-				width:   20,
-				timeout: time.Now().Add(time.Second * 20),
+				height: 20,
+				width:  20,
 				grid: grid{
 					alive: make(map[pos]alive),
 				},
@@ -73,10 +69,11 @@ func TestStep(t *testing.T) {
 	}
 	for _, tC := range testCases {
 		t.Run(tC.desc, func(t *testing.T) {
+			tC.model.speed = time.Second
 			for _, cell := range tC.cells {
 				tC.model.grid.alive[cell] = alive{}
 			}
-			tC.model.applyRules()
+			tC.model.nextState()
 
 			assert.Equal(t, tC.want, tC.model.grid.alive)
 		})
