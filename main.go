@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"strings"
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -16,6 +15,7 @@ type model struct {
 	width  int
 	grid   grid
 	speed  time.Duration
+	start  bool
 }
 
 type pos struct {
@@ -29,7 +29,7 @@ type grid struct {
 type alive struct{}
 
 func main() {
-	p := tea.NewProgram(initialModel())
+	p := tea.NewProgram(initialModel(), tea.WithMouseAllMotion(), tea.WithAltScreen())
 	if err := p.Start(); err != nil {
 		fmt.Printf("Alas, there's been an error: %v", err)
 		os.Exit(1)
@@ -88,13 +88,22 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+c", "q", "esc":
 			return m, tea.Quit
 		case "enter":
-			m.height++
+			m.start = !m.start
+			return m, tick(m.speed)
 		}
 
 	case tickMsg:
+		if !m.start {
+			return m, nil
+		}
+
 		m.nextState()
 		return m, tick(m.speed)
+	case tea.MouseMsg:
+		e := tea.MouseEvent(msg)
+		m.toggleCell(e)
 	}
+
 	return m, nil
 }
 
@@ -125,10 +134,7 @@ func (m *model) nextState() {
 }
 
 func (m model) View() string {
-	// The header
-	s := []rune("What should we buy at the market?\n\n")
-	s = append(s, []rune(strings.Repeat("-", m.width))...)
-
+	var s string
 	for y := 0; y < m.height; y++ {
 		for x := 0; x < m.width; x++ {
 			var val string
@@ -137,10 +143,29 @@ func (m model) View() string {
 			} else {
 				val = string([]byte{254})
 			}
-			s = append(s, []rune(val)...)
+			s += val
 		}
-		s = append(s, rune('\n'))
+		s += "\n"
 	}
 
-	return string(s)
+	return s
+}
+
+// Toggle a cell state with a left click
+func (m model) toggleCell(event tea.MouseEvent) {
+	if event.Type != tea.MouseLeft {
+		return
+	}
+	if event.X < 0 || event.X >= m.width || event.Y < 0 || event.Y >= m.height {
+		return
+	}
+	cell := pos{
+		x: event.X,
+		y: event.Y,
+	}
+	if _, ok := m.grid.alive[cell]; ok {
+		delete(m.grid.alive, cell)
+		return
+	}
+	m.grid.alive[cell] = alive{}
 }
