@@ -6,6 +6,7 @@ import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
 type tickMsg time.Time
@@ -27,6 +28,11 @@ type grid struct {
 }
 
 type alive struct{}
+
+var style = lipgloss.NewStyle().
+	Foreground(lipgloss.Color("#FFFDF5")).
+	Background(lipgloss.Color("#25A065")).
+	Padding(0, 1)
 
 func main() {
 	p := tea.NewProgram(initialModel(), tea.WithMouseAllMotion(), tea.WithAltScreen())
@@ -141,14 +147,14 @@ func (m model) View() string {
 			if _, ok := m.grid.alive[pos{x: x, y: y}]; !ok {
 				val = " "
 			} else {
-				val = string([]byte{254})
+				val = "█"
 			}
 			s += val
 		}
 		s += "\n"
 	}
 
-	return s
+	return style.Render(s)
 }
 
 // Toggle a cell state with a left click
