@@ -1,10 +1,10 @@
 # LIFE
 
-A Go terminal implementation of [https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life](Conway's Game of Life) made with [BubbleTea](https://github.com/charmbracelet/bubbletea)
+A Go terminal implementation of [Conway's Game of Life](https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life) made with [BubbleTea](https://github.com/charmbracelet/bubbletea)
 
 ## Demo
 
-![Life Demo](https://github.com/Smelton01/life/tree/master/demo/life_demo.gif)
+![Life Demo](https://github.com/Smelton01/life/blob/master/demo/life_demo.gif)
 
 ## How to run
 
